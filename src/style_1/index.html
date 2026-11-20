@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>你的名字 — 前端设计工程师</title>
+<meta name="description" content="前端设计工程师。做界面、做动效，也做那套让团队少吵三次架的视觉系统。">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="你的名字 — 前端设计工程师">
+<meta property="og:description" content="做界面、做动效，也做那套让团队少吵三次架的视觉系统。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230a84ff'/%3E%3Cstop offset='1' stop-color='%235e5ce6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='%23fff'/%3E%3Ccircle cx='16' cy='16' r='7' fill='url(%23g)'/%3E%3C/svg%3E">
+
+<script>
+/* 在首次绘制前定主题，避免闪一下白/黑（FOUC） */
+(function () {
+  var saved = null;
+  try { saved = localStorage.getItem('style_1.theme'); } catch (e) {}
+  var sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  var t = (saved === 'light' || saved === 'dark') ? saved : sys;
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.style.colorScheme = t;
+})();
+</script>
+
+<style>
+/* ═════════════════════════════════════════════════════════════
+   style_1 · 苹果式清晰毛玻璃（Apple / macOS material）
+   两套主题共用一套结构，颜色与材质全部走令牌。
+   ═════════════════════════════════════════════════════════════ */
+
+/* 让 --sweep 可以被 transition 插值（这是斜向幕布动画的前提）；
+   inherits 必须为 true，幕布上的斜光才能读到同一个进度 */
+@property --sweep {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+:root{
+  /* 结构 */
+  --max:1160px;
+  --radius-xl:30px;
+  --radius:20px;
+  --radius-sm:13px;
+  --radius-xs:9px;
+
+  /* 缓动：苹果手感偏「快进慢出」，不用线性 */
+  --ease:cubic-bezier(.32,.72,0,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-inout:cubic-bezier(.65,0,.35,1);
+
+  /* 材质可调项（参数面板改这四个） */
+  --glass-blur:24px;
+  --glass-sat:180%;
+  --glass-tint:1;
+  --grain:.022;
+
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",
+         "Segoe UI Variable Display","Segoe UI","PingFang SC","Hiragino Sans GB",
+         "Microsoft YaHei",system-ui,sans-serif;
+
+  /* 两套壁纸各自独立定义，幕布要能读到「目标主题」的那一套。
+     四个色块要铺满整个画面、压到面板背后 —— 玻璃后面没东西可糊，
+     它就只是一块白板。这是这类风格最容易翻车的地方。 */
+  --wall-light:
+    radial-gradient(58% 48% at 22% 20%, rgba(176,205,253,.82) 0%, rgba(176,205,253,0) 62%),
+    radial-gradient(56% 46% at 78% 26%, rgba(208,189,252,.82) 0%, rgba(208,189,252,0) 62%),
+    radial-gradient(54% 46% at 88% 80%, rgba(255,208,176,.78) 0%, rgba(255,208,176,0) 64%),
+    radial-gradient(56% 48% at 14% 84%, rgba(176,240,226,.78) 0%, rgba(176,240,226,0) 64%),
+    linear-gradient(168deg,#f6f9ff 0%,#ebf1fc 48%,#f7f2fd 100%);
+  --wall-dark:
+    radial-gradient(58% 48% at 20% 18%, rgba(23,54,127,.85) 0%, rgba(23,54,127,0) 62%),
+    radial-gradient(56% 46% at 80% 24%, rgba(61,33,112,.80) 0%, rgba(61,33,112,0) 62%),
+    radial-gradient(54% 46% at 90% 82%, rgba(82,31,46,.75) 0%, rgba(82,31,46,0) 64%),
+    radial-gradient(56% 48% at 12% 86%, rgba(13,51,70,.75) 0%, rgba(13,51,70,0) 64%),
+    linear-gradient(168deg,#04070d 0%,#080c17 48%,#070911 100%);
+}
+
+/* ── 浅色 ───────────────────────────────────────────────────── */
+html[data-theme="light"]{
+  --wall:var(--wall-light);
+  --page-bg:#f5f8fd;
+
+  --glass-base:.44;
+  --glass-bright:1.02;
+  --glass-stroke:rgba(255,255,255,.92);
+  --glass-edge:rgba(17,24,39,.055);
+  --glass-hi:rgba(255,255,255,.95);
+
+  --ink:#0a1020;
+  --ink-2:#3d465a;
+  --ink-3:#5d6779;
+  --hairline:rgba(17,24,39,.09);
+
+  --accent:#0a7cff;
+  --accent-2:#5e5ce6;
+  --accent-ink:#ffffff;
+
+  --track:rgba(17,24,39,.055);
+  --thumb:#ffffff;
+  --thumb-shadow:0 1px 3px rgba(17,24,39,.16),0 0 0 .5px rgba(17,24,39,.06);
+
+  --shadow-1:0 1px 2px rgba(17,24,39,.05);
+  --shadow-2:0 14px 34px -16px rgba(17,24,39,.24);
+  --shadow-3:0 30px 70px -34px rgba(17,24,39,.30);
+
+  --sheen:rgba(255,255,255,.55);
+  --wipe-sheen:rgba(255,255,255,.42);
+  --on-glass-dim:rgba(17,24,39,.045);
+  --thumb-strength:.55;
+}
+
+/* ── 深色 ───────────────────────────────────────────────────── */
+html[data-theme="dark"]{
+  --wall:var(--wall-dark);
+  --page-bg:#05080f;
+
+  --glass-base:.085;
+  --glass-bright:.94;
+  --glass-stroke:rgba(255,255,255,.13);
+  --glass-edge:rgba(255,255,255,.05);
+  --glass-hi:rgba(255,255,255,.13);
+
+  --ink:#f2f5fa;
+  --ink-2:#aeb8ca;
+  --ink-3:#8590a3;
+  --hairline:rgba(255,255,255,.10);
+
+  --accent:#0a84ff;
+  --accent-2:#7a78ff;
+  --accent-ink:#ffffff;
+
+  --track:rgba(255,255,255,.09);
+  --thumb:rgba(255,255,255,.22);
+  --thumb-shadow:0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.24);
+
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 16px 40px -20px rgba(0,0,0,.85);
+  --shadow-3:0 34px 80px -40px rgba(0,0,0,.9);
+
+  --sheen:rgba(255,255,255,.10);
+  --wipe-sheen:rgba(120,160,255,.20);
+  --on-glass-dim:rgba(255,255,255,.05);
+  --thumb-strength:.92;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+html{
+  scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+  background:var(--page-bg);
+}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:var(--font);
+  font-size:16px;
+  line-height:1.65;
+  letter-spacing:-.006em;
+  color:var(--ink);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+}
+
+::selection{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+
+:focus-visible{
+  outline:2.5px solid var(--accent);
+  outline-offset:3px;
+  border-radius:8px;
+}
+
+.skip{
+  position:absolute;left:-9999px;top:0;z-index:999;
+  padding:12px 18px;border-radius:0 0 12px 0;
+  background:var(--ink);color:var(--page-bg);font-weight:600;text-decoration:none;
+}
+.skip:focus{left:0}
+
+/* ── 壁纸：整个页面的底 ─────────────────────────────────────── */
+.wall{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:var(--wall);
+}
+/* 极轻的一层暗角，让中间的内容浮起来 */
+.wall::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 100% at 50% 40%,transparent 55%,var(--on-glass-dim) 100%);
+}
+
+/* 噪点：只为了压掉大面积渐变的色带，苹果材质本身也很少有明显颗粒 */
+.grain{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  opacity:var(--grain);
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── 玻璃：整套风格的核心公式 ───────────────────────────────── */
+.glass{
+  position:relative;
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,calc(var(--glass-base) * var(--glass-tint) + .05)),
+    rgba(255,255,255,calc(var(--glass-base) * var(--glass-tint)))
+  );
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-bright));
+  backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-bright));
+  border:1px solid var(--glass-stroke);
+  border-radius:var(--radius);
+  box-shadow:
+    inset 0 1px 0 var(--glass-hi),
+    0 0 0 .5px var(--glass-edge),
+    var(--shadow-1),
+    var(--shadow-2);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  html[data-theme="light"] .glass{background:rgba(255,255,255,.92)}
+  html[data-theme="dark"]  .glass{background:rgba(18,24,38,.92)}
+}
+
+/* ── 布局 ─────────────────────────────────────────────────── */
+.wrap{
+  width:min(var(--max),100% - 44px);
+  margin-inline:auto;
+}
+@media (max-width:640px){ .wrap{width:min(var(--max),100% - 28px)} }
+
+main{position:relative;z-index:2}
+section{scroll-margin-top:104px}
+.sec-pad{padding-block:clamp(56px,6.6vw,92px)}
+
+.sec-head{
+  display:flex;align-items:baseline;gap:14px;
+  margin-bottom:clamp(24px,3.4vw,40px);
+}
+.sec-idx{
+  font-size:12px;font-weight:600;letter-spacing:.14em;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;
+}
+.sec-title{
+  margin:0;
+  font-size:clamp(1.55rem,3.1vw,2.2rem);
+  font-weight:600;
+  line-height:1.18;
+  letter-spacing:-.028em;
+}
+.sec-en{
+  margin-left:auto;
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);white-space:nowrap;
+}
+@media (max-width:640px){ .sec-en{display:none} }
+
+/* ── 导航 ─────────────────────────────────────────────────── */
+.nav-wrap{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  padding:14px 0;
+  transition:padding .5s var(--ease);
+}
+.nav-wrap.scrolled{padding:9px 0}
+
+.nav{
+  display:flex;align-items:center;gap:16px;
+  width:min(var(--max),100% - 44px);
+  margin-inline:auto;
+  padding:8px 8px 8px 18px;
+  border-radius:999px;
+  transition:padding .5s var(--ease);
+}
+@media (max-width:640px){
+  .nav{width:min(var(--max),100% - 28px);padding:7px 7px 7px 14px;gap:10px}
+}
+
+.brand{
+  display:flex;align-items:center;gap:9px;
+  font-size:15px;font-weight:600;letter-spacing:-.012em;
+  color:var(--ink);text-decoration:none;white-space:nowrap;
+}
+.brand-dot{
+  width:10px;height:10px;border-radius:50%;flex:none;
+  background:linear-gradient(160deg,var(--accent),var(--accent-2));
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent);
+}
+.brand-en{color:var(--ink-3);font-weight:400;font-size:12px;letter-spacing:.02em}
+@media (max-width:430px){ .brand-en{display:none} }
+
+.nav-links{
+  display:flex;align-items:center;gap:2px;
+  margin:0 0 0 auto;padding:0;list-style:none;
+}
+.nav-links a{
+  display:block;padding:7px 13px;border-radius:999px;
+  font-size:13.5px;font-weight:500;color:var(--ink-2);text-decoration:none;
+  transition:color .25s var(--ease),background .25s var(--ease);
+}
+.nav-links a:hover{color:var(--ink);background:var(--on-glass-dim)}
+@media (max-width:880px){ .nav-links{display:none} }
+
+/* 主题切换：两段式，带滑块的拇指 */
+.theme-switch{
+  position:relative;
+  display:flex;align-items:center;
+  padding:3px;border-radius:999px;
+  background:var(--track);
+  flex:none;
+}
+.ts-thumb{
+  position:absolute;top:3px;left:3px;
+  width:36px;height:30px;border-radius:999px;
+  background:var(--thumb);
+  box-shadow:var(--thumb-shadow);
+  transition:transform .42s var(--ease-out);
+  pointer-events:none;
+}
+html[data-theme="dark"] .ts-thumb{transform:translateX(36px)}
+.ts-btn{
+  position:relative;z-index:1;
+  display:grid;place-items:center;
+  width:36px;height:30px;padding:0;
+  border:0;background:none;cursor:pointer;
+  color:var(--ink-3);
+  border-radius:999px;
+  transition:color .3s var(--ease);
+}
+.ts-btn svg{width:15px;height:15px}
+.ts-btn[aria-checked="true"]{color:var(--ink)}
+.ts-btn:hover{color:var(--ink)}
+
+.nav-cta{
+  padding:8px 17px;border-radius:999px;
+  font-size:13.5px;font-weight:600;letter-spacing:-.01em;
+  color:var(--accent-ink);text-decoration:none;white-space:nowrap;
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--accent) 82%,#ffffff),
+    var(--accent));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    0 1px 2px rgba(10,90,200,.28),
+    0 8px 20px -10px color-mix(in srgb,var(--accent) 70%,transparent);
+  transition:transform .25s var(--ease),filter .25s var(--ease),box-shadow .25s var(--ease);
+}
+.nav-cta:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.nav-cta:active{transform:translateY(0) scale(.98)}
+@media (max-width:430px){ .nav-cta{padding:7px 14px;font-size:13px} }
+
+/* ── Hero ─────────────────────────────────────────────────── */
+.hero{
+  display:grid;
+  grid-template-columns:1.12fr .88fr;
+  gap:clamp(30px,4.6vw,60px);
+  align-items:center;
+  padding-top:clamp(124px,15.5vh,176px);
+  padding-bottom:clamp(44px,6vw,72px);
+}
+@media (max-width:940px){
+  .hero{grid-template-columns:1fr;gap:38px;padding-top:clamp(112px,15vh,150px)}
+}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  margin:0 0 22px;padding:6px 14px 6px 11px;
+  border-radius:999px;
+  border:1px solid var(--hairline);
+  background:rgba(255,255,255,calc(var(--glass-base) * var(--glass-tint) * .55));
+  -webkit-backdrop-filter:blur(12px) saturate(var(--glass-sat));
+  backdrop-filter:blur(12px) saturate(var(--glass-sat));
+  font-size:12px;font-weight:500;letter-spacing:.005em;
+  color:var(--ink-2);
+}
+.pulse{
+  width:7px;height:7px;border-radius:50%;flex:none;
+  background:#30d158;
+  box-shadow:0 0 0 0 rgba(48,209,88,.6);
+  animation:pulse 2.6s var(--ease) infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(48,209,88,.55)}
+  70%{box-shadow:0 0 0 8px rgba(48,209,88,0)}
+  100%{box-shadow:0 0 0 0 rgba(48,209,88,0)}
+}
+
+.hero-title{
+  margin:0 0 22px;
+  font-size:clamp(2.35rem,5.5vw,4.15rem);
+  font-weight:600;
+  line-height:1.06;
+  letter-spacing:-.032em;
+}
+.hero-title .line{display:block;white-space:nowrap}
+
+.grad{
+  background:linear-gradient(100deg,var(--accent) 0%,#7b6bff 52%,#e07ad0 100%);
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  padding-right:.04em;
+}
+
+.hero-lede{
+  max-width:47ch;margin:0 0 32px;
+  font-size:clamp(15px,1.12vw,17px);
+  line-height:1.72;
+  color:var(--ink-2);
+  text-wrap:pretty;
+}
+.nw{white-space:nowrap}
+
+.hero-actions{display:flex;flex-wrap:wrap;gap:11px}
+
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:13px 23px;border-radius:999px;
+  font-family:inherit;font-size:14.5px;font-weight:600;letter-spacing:-.01em;
+  text-decoration:none;cursor:pointer;border:1px solid transparent;
+  transition:transform .25s var(--ease),box-shadow .3s var(--ease),
+             background .3s var(--ease),color .25s var(--ease),filter .25s var(--ease);
+}
+.btn .arw{transition:transform .3s var(--ease)}
+.btn:hover .arw{transform:translateX(3px)}
+
+.btn-primary{
+  color:var(--accent-ink);
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--accent) 80%,#ffffff),
+    var(--accent));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.38),
+    0 1px 2px rgba(10,90,200,.3),
+    0 12px 26px -12px color-mix(in srgb,var(--accent) 75%,transparent);
+}
+.btn-primary:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn-primary:active{transform:translateY(0) scale(.985)}
+
+.btn-ghost{
+  color:var(--ink);
+  background:rgba(255,255,255,calc(var(--glass-base) * var(--glass-tint) * .85));
+  border-color:var(--hairline);
+  -webkit-backdrop-filter:blur(14px) saturate(var(--glass-sat));
+  backdrop-filter:blur(14px) saturate(var(--glass-sat));
+  box-shadow:inset 0 1px 0 var(--glass-hi),var(--shadow-1);
+}
+.btn-ghost:hover{transform:translateY(-2px);background:var(--on-glass-dim)}
+.btn-ghost:active{transform:translateY(0) scale(.985)}
+
+/* 名片 */
+.idcard{padding:24px 24px 18px}
+.idcard::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(150deg,var(--sheen),transparent 46%);
+  opacity:.55;
+}
+.idcard > *{position:relative;z-index:1}
+.idcard-top{display:flex;align-items:center;gap:14px}
+.avatar{
+  width:54px;height:54px;flex:none;border-radius:50%;
+  background:
+    radial-gradient(circle at 32% 26%,rgba(255,255,255,.95),rgba(255,255,255,0) 46%),
+    radial-gradient(circle at 72% 82%,rgba(94,92,230,.95),rgba(94,92,230,0) 62%),
+    linear-gradient(150deg,#7cc7ff,var(--accent) 55%,#7b6bff);
+  box-shadow:
+    inset 0 1px 2px rgba(255,255,255,.6),
+    inset 0 -6px 14px rgba(10,40,110,.28),
+    0 6px 16px -8px color-mix(in srgb,var(--accent) 70%,transparent);
+}
+.idcard-name{margin:0;font-size:16px;font-weight:600;letter-spacing:-.015em}
+.idcard-role{margin:2px 0 0;font-size:12.5px;color:var(--ink-3)}
+
+.idcard-meta{
+  margin:20px 0 0;padding:0;
+  border-top:1px solid var(--hairline);
+}
+.idcard-meta > div{
+  display:flex;justify-content:space-between;gap:16px;
+  padding:10px 0;border-bottom:1px solid var(--hairline);
+}
+.idcard-meta dt{
+  font-size:11.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);
+}
+.idcard-meta dd{margin:0;font-size:13px;color:var(--ink-2);text-align:right}
+
+.idcard-foot{
+  display:flex;align-items:center;gap:7px;
+  margin-top:14px;font-size:12px;color:var(--ink-3);
+}
+.idcard-foot .dot{
+  width:6px;height:6px;border-radius:50%;background:#30d158;
+  box-shadow:0 0 8px rgba(48,209,88,.8);
+}
+
+/* ── 术语带 ───────────────────────────────────────────────── */
+.strip{
+  position:relative;z-index:2;
+  padding:18px 0;
+  border-block:1px solid var(--hairline);
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+}
+.strip-track{display:flex;width:max-content;animation:slide 46s linear infinite}
+.strip:hover .strip-track{animation-play-state:paused}
+@keyframes slide{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(-50%,0,0)}
+}
+.strip-list{display:flex;align-items:center;margin:0;padding:0;list-style:none}
+.strip-list li{
+  display:flex;align-items:center;gap:22px;padding-right:22px;
+  font-size:12px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);white-space:nowrap;
+}
+.strip-list li::after{
+  content:"";width:3px;height:3px;border-radius:50%;
+  background:var(--ink-3);opacity:.5;flex:none;
+}
+
+/* ── 作品卡 ───────────────────────────────────────────────── */
+.work-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+.card{
+  display:flex;flex-direction:column;
+  padding:12px;overflow:hidden;
+  transition:transform .45s var(--ease-out),box-shadow .45s var(--ease-out);
+  will-change:transform;
+}
+.card:nth-child(1){grid-column:span 7}
+.card:nth-child(2){grid-column:span 5}
+.card:nth-child(3){grid-column:span 5}
+.card:nth-child(4){grid-column:span 7}
+@media (max-width:900px){ .card{grid-column:span 12 !important} }
+
+.card:hover{
+  transform:translateY(-4px);
+  box-shadow:
+    inset 0 1px 0 var(--glass-hi),
+    0 0 0 .5px var(--glass-edge),
+    var(--shadow-2),
+    var(--shadow-3);
+}
+
+/* 缩略图：抽象材质 + 一块真的小玻璃 */
+.thumb{
+  position:relative;flex:1 1 auto;
+  min-height:clamp(170px,15vw,224px);
+  border-radius:var(--radius-sm);
+  overflow:hidden;isolation:isolate;
+  background:var(--on-glass-dim);
+}
+.thumb::before{
+  content:"";position:absolute;inset:-20%;
+  filter:blur(18px);
+  opacity:var(--thumb-strength,1);
+  transition:transform .8s var(--ease-out);
+}
+.card:hover .thumb::before{transform:scale(1.08)}
+.thumb-pane{
+  position:absolute;left:15%;top:22%;width:70%;height:50%;
+  display:flex;flex-direction:column;justify-content:center;gap:7px;
+  padding:0 15%;
+  border-radius:11px;
+  border:1px solid rgba(255,255,255,.42);
+  background:linear-gradient(155deg,rgba(255,255,255,.34),rgba(255,255,255,.08));
+  -webkit-backdrop-filter:blur(8px) saturate(180%);
+  backdrop-filter:blur(8px) saturate(180%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 14px 26px -16px rgba(10,20,40,.7);
+  transition:transform .8s var(--ease-out),border-radius .8s var(--ease-out);
+}
+.thumb-pane i{
+  display:block;height:5px;border-radius:99px;
+  background:rgba(255,255,255,.62);
+  transition:background .5s var(--ease);
+}
+.thumb-pane i:nth-child(1){width:56%}
+.thumb-pane i:nth-child(2){width:86%;background:rgba(255,255,255,.42)}
+.thumb-pane i:nth-child(3){width:38%}
+.card:hover .thumb-pane{transform:translateY(-4px) scale(1.02);border-radius:15px}
+
+/* 四种色相，都是低饱和的苹果系统色 */
+.t1::before{background:
+  radial-gradient(46% 46% at 26% 22%,#7cc7ff,transparent 70%),
+  radial-gradient(52% 52% at 78% 72%,#7b6bff,transparent 72%)}
+.t2::before{background:
+  radial-gradient(48% 48% at 72% 24%,#ffb340,transparent 70%),
+  radial-gradient(54% 54% at 22% 76%,#ff6b8a,transparent 72%)}
+.t3::before{background:
+  radial-gradient(50% 50% at 28% 70%,#40d8c0,transparent 72%),
+  radial-gradient(46% 46% at 76% 24%,#7cc7ff,transparent 70%)}
+.t4::before{background:
+  radial-gradient(52% 52% at 64% 20%,#e07ad0,transparent 70%),
+  radial-gradient(48% 48% at 24% 76%,#7b6bff,transparent 72%)}
+
+.thumb-tag{
+  position:absolute;left:12px;bottom:10px;z-index:2;
+  padding:5px 10px;border-radius:999px;
+  font-size:10px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+  color:#fff;
+  background:rgba(12,18,32,.42);
+  border:1px solid rgba(255,255,255,.28);
+  -webkit-backdrop-filter:blur(10px) saturate(180%);
+  backdrop-filter:blur(10px) saturate(180%);
+}
+
+.card-body{padding:18px 8px 8px}
+.card-head{
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  margin-bottom:8px;
+}
+.card-head h3{
+  margin:0;font-size:clamp(16.5px,1.5vw,19px);font-weight:600;
+  letter-spacing:-.018em;text-wrap:balance;
+}
+.idx{
+  font-size:11px;font-weight:600;letter-spacing:.12em;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;
+  transition:color .35s var(--ease);
+}
+.card:hover .idx{color:var(--accent)}
+.card-body p{
+  margin:0 0 14px;font-size:13.5px;line-height:1.68;
+  color:var(--ink-3);text-wrap:pretty;
+}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.tags li{
+  padding:4px 10px;border-radius:999px;
+  font-size:11px;font-weight:500;letter-spacing:.02em;color:var(--ink-2);
+  border:1px solid var(--hairline);
+  background:var(--on-glass-dim);
+}
+
+/* ── 技术栈 ───────────────────────────────────────────────── */
+.stack-panel{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;padding:6px;overflow:hidden;
+}
+/* 面板背后没有彩色时，玻璃会退化成一块白/灰板；补一层本地光晕给它「透」 */
+.stack-panel::before{
+  content:"";position:absolute;inset:-45%;pointer-events:none;
+  background:
+    radial-gradient(32% 32% at 18% 22%, color-mix(in srgb,var(--accent) 26%,transparent), transparent 68%),
+    radial-gradient(36% 36% at 82% 76%, color-mix(in srgb,var(--accent-2) 24%,transparent), transparent 70%),
+    radial-gradient(26% 26% at 54% 100%, rgba(255,166,120,.16), transparent 70%);
+  filter:blur(30px);
+}
+.stack-panel > *{position:relative;z-index:1}
+@media (max-width:820px){ .stack-panel{grid-template-columns:1fr} }
+
+.stack-col{padding:clamp(18px,2.4vw,30px)}
+.stack-col + .stack-col{border-left:1px solid var(--hairline)}
+@media (max-width:820px){
+  .stack-col + .stack-col{border-left:0;border-top:1px solid var(--hairline)}
+}
+.stack-col h3{
+  margin:0 0 4px;font-size:11.5px;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+}
+.stack-col .stack-sub{margin:0 0 18px;font-size:13px;color:var(--ink-3);line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:0;list-style:none}
+.chips li{
+  padding:7px 12px;border-radius:10px;
+  font-size:13px;font-weight:500;color:var(--ink-2);
+  border:1px solid var(--hairline);
+  background:var(--on-glass-dim);
+  transition:color .25s var(--ease),border-color .25s var(--ease),
+             background .25s var(--ease),transform .25s var(--ease);
+}
+.chips li:hover{
+  color:var(--ink);border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);
+  transform:translateY(-2px);
+}
+
+/* ── 随笔 ─────────────────────────────────────────────────── */
+.note-list{margin:0;padding:0;list-style:none;border-top:1px solid var(--hairline)}
+.note-list li{border-bottom:1px solid var(--hairline)}
+.note-list a{
+  display:grid;grid-template-columns:auto 1fr auto auto;
+  align-items:baseline;gap:clamp(12px,2.2vw,28px);
+  padding:19px 10px;
+  text-decoration:none;color:inherit;border-radius:12px;
+  transition:background .3s var(--ease),padding-left .3s var(--ease);
+}
+.note-list a:hover{background:var(--on-glass-dim);padding-left:18px}
+.note-idx{
+  font-size:11px;font-weight:600;letter-spacing:.12em;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;
+}
+.note-title{font-size:clamp(14.5px,1.4vw,17px);font-weight:500;letter-spacing:-.012em;text-wrap:pretty}
+.note-tag{font-size:11px;font-weight:500;letter-spacing:.06em;color:var(--ink-3);white-space:nowrap}
+.note-date{font-size:12px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+@media (max-width:720px){
+  .note-list a{grid-template-columns:auto 1fr auto;gap:10px}
+  .note-tag{display:none}
+}
+
+/* ── 联系 ─────────────────────────────────────────────────── */
+.contact-panel{
+  position:relative;
+  padding:clamp(36px,5.4vw,68px) clamp(22px,4.4vw,58px);
+  overflow:hidden;text-align:center;
+}
+.contact-panel::before{
+  content:"";position:absolute;inset:-50%;pointer-events:none;
+  background:
+    radial-gradient(30% 30% at 22% 26%,color-mix(in srgb,var(--accent) 34%,transparent),transparent 68%),
+    radial-gradient(32% 32% at 78% 70%,color-mix(in srgb,var(--accent-2) 30%,transparent),transparent 70%),
+    radial-gradient(26% 26% at 54% 96%,rgba(255,166,120,.22),transparent 70%);
+  filter:blur(34px);
+}
+.contact-panel > *{position:relative}
+.contact-title{
+  margin:0 0 14px;
+  font-size:clamp(1.85rem,4.2vw,3rem);
+  font-weight:600;line-height:1.12;letter-spacing:-.032em;
+  text-wrap:balance;
+}
+.contact-lede{
+  max-width:52ch;margin:0 auto 28px;
+  font-size:14.5px;line-height:1.72;color:var(--ink-2);
+  text-wrap:pretty;
+}
+.contact-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+
+/* ── 页脚 ─────────────────────────────────────────────────── */
+.site-foot{
+  position:relative;z-index:2;
+  padding-block:38px 52px;
+  border-top:1px solid var(--hairline);
+}
+.foot-inner{
+  display:flex;flex-wrap:wrap;gap:14px 26px;
+  align-items:center;justify-content:space-between;
+  font-size:12.5px;color:var(--ink-3);
+}
+.foot-inner a{color:var(--ink-2);text-decoration:none;transition:color .25s var(--ease)}
+.foot-inner a:hover{color:var(--accent)}
+.foot-links{display:flex;flex-wrap:wrap;gap:16px}
+.foot-note{max-width:52ch;line-height:1.7;text-wrap:pretty;margin:0}
+
+/* ── 参数面板 ─────────────────────────────────────────────── */
+.tweaks{
+  position:fixed;right:18px;bottom:18px;z-index:60;
+  display:flex;flex-direction:column;align-items:flex-end;gap:10px;
+}
+.tweak-toggle{
+  display:inline-flex;align-items:center;justify-content:center;gap:0;
+  min-width:44px;min-height:44px;padding:13px;border-radius:999px;
+  font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);
+  background:rgba(255,255,255,calc(var(--glass-base) * var(--glass-tint) + .04));
+  border:1px solid var(--glass-stroke);
+  -webkit-backdrop-filter:blur(18px) saturate(var(--glass-sat));
+  backdrop-filter:blur(18px) saturate(var(--glass-sat));
+  cursor:pointer;
+  box-shadow:inset 0 1px 0 var(--glass-hi),var(--shadow-1),var(--shadow-2);
+  transition:transform .25s var(--ease),background .25s var(--ease),border-color .25s var(--ease);
+}
+.tweak-toggle:hover{transform:translateY(-2px)}
+.tweak-toggle svg{width:15px;height:15px;flex:none}
+.tweak-toggle[aria-expanded="true"]{
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+}
+.tweak-toggle .label{
+  max-width:0;opacity:0;overflow:hidden;white-space:nowrap;
+  margin-left:0;line-height:1;
+  transition:max-width .42s var(--ease-out),opacity .24s var(--ease),margin-left .42s var(--ease-out);
+}
+.tweak-toggle:hover .label,
+.tweak-toggle:focus-visible .label,
+.tweak-toggle[aria-expanded="true"] .label{
+  max-width:130px;opacity:1;margin-left:9px;
+}
+
+.tweak-panel{
+  width:274px;padding:18px;border-radius:20px;
+  transform-origin:bottom right;
+  transition:opacity .3s var(--ease),transform .3s var(--ease-out),visibility .3s;
+}
+.tweak-panel[hidden]{
+  display:block;opacity:0;visibility:hidden;
+  transform:translateY(10px) scale(.96);pointer-events:none;
+}
+.tweak-panel h2{margin:0 0 3px;font-size:13px;font-weight:600;letter-spacing:-.01em}
+.tweak-hint{margin:0 0 16px;font-size:11.5px;color:var(--ink-3);line-height:1.55}
+
+.tweak-field{margin-bottom:14px}
+.tweak-field label{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  margin-bottom:6px;font-size:11.5px;font-weight:500;color:var(--ink-2);
+}
+.tweak-val{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+input[type="range"]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:20px;background:transparent;cursor:pointer;margin:0;
+}
+input[type="range"]::-webkit-slider-runnable-track{
+  height:3px;border-radius:99px;background:var(--track);
+}
+input[type="range"]::-moz-range-track{
+  height:3px;border-radius:99px;background:var(--track);
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:14px;height:14px;margin-top:-5.5px;border-radius:50%;
+  background:var(--thumb);border:0;box-shadow:var(--thumb-shadow);
+}
+input[type="range"]::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;background:var(--thumb);border:0;
+  box-shadow:var(--thumb-shadow);
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb{
+  box-shadow:var(--thumb-shadow),0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent);
+}
+
+.tweak-reset{
+  width:100%;margin-top:2px;padding:9px;border-radius:10px;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:500;color:var(--ink-2);
+  background:var(--on-glass-dim);border:1px solid var(--hairline);
+  transition:background .25s var(--ease),color .25s var(--ease);
+}
+.tweak-reset:hover{background:var(--track);color:var(--ink)}
+
+/* ── 复制提示 ─────────────────────────────────────────────── */
+.toast{
+  position:fixed;left:50%;bottom:26px;z-index:80;
+  transform:translate(-50%,14px);
+  padding:10px 18px;border-radius:999px;
+  font-size:13px;font-weight:500;color:var(--ink);
+  background:rgba(255,255,255,calc(var(--glass-base) * var(--glass-tint) + .18));
+  border:1px solid var(--glass-stroke);
+  -webkit-backdrop-filter:blur(18px) saturate(var(--glass-sat));
+  backdrop-filter:blur(18px) saturate(var(--glass-sat));
+  box-shadow:inset 0 1px 0 var(--glass-hi),var(--shadow-2);
+  opacity:0;pointer-events:none;
+  transition:opacity .28s var(--ease),transform .38s var(--ease-out);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ── 入场 ─────────────────────────────────────────────────── */
+.reveal{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
+.js .reveal{opacity:0;transform:translateY(18px)}
+.js .reveal.in{opacity:1;transform:none}
+
+/* ═════════════════════════════════════════════════════════════
+   主题切换 · 方案 A：View Transitions（首选）
+   浏览器会把「切换前」和「切换后」各拍一张快照叠在一起，
+   我们只需要给新快照加一个斜向羽化的遮罩 —— 擦出来的是真实内容，
+   不是一张纯色幕布，所以过程中不会出现「页面变空」。
+   ═════════════════════════════════════════════════════════════ */
+/* 每个伪元素单独一条规则：选择器列表里只要有一个不被识别，整条规则都会被丢掉 */
+::view-transition-group(root){
+  animation:none;
+}
+::view-transition-image-pair(root){
+  animation:none;
+  isolation:auto;
+}
+::view-transition-old(root){
+  animation:none;              /* 关掉 UA 默认的淡出，旧页面必须一直铺在下面 */
+  z-index:1;
+}
+::view-transition-new(root){
+  animation:vt-sweep var(--wipe-dur,760ms) var(--ease-inout) forwards;
+  z-index:2;                   /* 新页面从左上角擦出来 */
+  --sweep:0;
+  -webkit-mask-image:linear-gradient(135deg,
+    #000 0,
+    #000 calc(var(--sweep) * 125% - 25%),
+    transparent calc(var(--sweep) * 125%));
+  mask-image:linear-gradient(135deg,
+    #000 0,
+    #000 calc(var(--sweep) * 125% - 25%),
+    transparent calc(var(--sweep) * 125%));
+}
+@keyframes vt-sweep{
+  from{ --sweep:0 }
+  to{ --sweep:1 }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   主题切换 · 方案 B：幕布（不支持 View Transitions 时降级）
+   幕布画的是「目标主题」的壁纸，铺满那一刻换主题完全看不见。
+   ═════════════════════════════════════════════════════════════ */
+.theme-wipe{
+  position:fixed;inset:0;z-index:9999;pointer-events:none;
+  --sweep:0;
+  transition:--sweep var(--wipe-dur,760ms) var(--ease-inout);
+  /* 135deg = 从左上指向右下；黑区随 --sweep 推进，边缘带一段羽化 */
+  -webkit-mask-image:linear-gradient(135deg,
+    #000 0,
+    #000 calc(var(--sweep) * 125% - 25%),
+    transparent calc(var(--sweep) * 125%));
+  mask-image:linear-gradient(135deg,
+    #000 0,
+    #000 calc(var(--sweep) * 125% - 25%),
+    transparent calc(var(--sweep) * 125%));
+}
+.theme-wipe[data-theme="light"]{background:var(--wall-light)}
+.theme-wipe[data-theme="dark"]{background:var(--wall-dark)}
+/* 幕布自带一道同向的斜光，让「扫过来」这件事看得见。
+   它跟着进度淡出：铺满那一刻画面必须和壁纸完全一致，否则撤幕布会闪一下白。 */
+.theme-wipe::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 6%,var(--wipe-sheen) 40%,transparent 64%);
+  opacity:clamp(0, calc(1.7 - var(--sweep) * 1.9), 1);
+}
+html[data-theme="light"] .theme-wipe[data-theme="light"]{--wipe-sheen:rgba(255,255,255,.5)}
+html[data-theme="light"] .theme-wipe[data-theme="dark"]{--wipe-sheen:rgba(120,160,255,.22)}
+html[data-theme="dark"]  .theme-wipe[data-theme="light"]{--wipe-sheen:rgba(255,255,255,.45)}
+html[data-theme="dark"]  .theme-wipe[data-theme="dark"]{--wipe-sheen:rgba(120,160,255,.18)}
+
+/* 换主题的那一帧禁掉所有过渡，避免幕布掀起后颜色还在慢慢爬 */
+html.no-anim *,
+html.no-anim *::before,
+html.no-anim *::after{
+  transition:none !important;
+}
+
+/* ── 降级 ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+  .js .reveal{opacity:1;transform:none}
+  .strip-track{animation:none}
+  .theme-wipe{transition:none}
+}
+</style>
+</head>
+<body id="top">
+
+<a class="skip" href="#main">跳到正文</a>
+
+<div class="wall" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav-wrap" id="navWrap">
+  <nav class="nav glass" aria-label="主导航">
+    <a class="brand" href="#top">
+      <span class="brand-dot" aria-hidden="true"></span>
+      你的名字 <span class="brand-en">/ portfolio</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#work">作品</a></li>
+      <li><a href="#stack">技术</a></li>
+      <li><a href="#notes">随笔</a></li>
+      <li><a href="#contact">联系</a></li>
+    </ul>
+
+    <div class="theme-switch" role="radiogroup" aria-label="外观模式">
+      <span class="ts-thumb" aria-hidden="true"></span>
+      <button class="ts-btn" type="button" role="radio" data-theme-set="light"
+              aria-checked="true" aria-label="浅色外观">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+             stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.1"/>
+          <path d="M12 2.4v2.3M12 19.3v2.3M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.3M19.3 12h2.3M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/>
+        </svg>
+      </button>
+      <button class="ts-btn" type="button" role="radio" data-theme-set="dark"
+              aria-checked="false" aria-label="深色外观">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+             stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.4 14.3A8.5 8.5 0 0 1 9.7 3.6a8.6 8.6 0 1 0 10.7 10.7Z"/>
+        </svg>
+      </button>
+    </div>
+
+    <a class="nav-cta" href="#contact">聊一聊</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="pulse" aria-hidden="true"></span>现在可接 2026 Q1 的项目</p>
+
+      <h1 class="hero-title">
+        <span class="line">把复杂的界面</span>
+        <span class="line">做得<span class="grad">安静一点</span>。</span>
+      </h1>
+
+      <p class="hero-lede">
+        独立前端设计工程师，做界面、做动效，也做那套让团队少吵三次架的视觉系统。
+        相信材质比装饰更有说服力 —— 一层<span class="nw">玻璃</span>、一点光、一层薄薄的<span class="nw">噪点</span>，就够了。
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#work">看看作品 <span class="arw" aria-hidden="true">→</span></a>
+        <button class="btn btn-ghost" type="button" data-copy="hello@yourname.com">复制邮箱</button>
+      </div>
+    </div>
+
+    <aside class="idcard glass reveal" aria-label="个人信息卡">
+      <div class="idcard-top">
+        <div class="avatar" aria-hidden="true"></div>
+        <div>
+          <p class="idcard-name">你的名字</p>
+          <p class="idcard-role">前端设计工程师 · 独立</p>
+        </div>
+      </div>
+
+      <dl class="idcard-meta">
+        <div><dt>坐标</dt><dd>上海 · GMT+8</dd></div>
+        <div><dt>偏好</dt><dd>CSS 原生 / 渐进增强</dd></div>
+        <div><dt>工具</dt><dd>Figma · VS Code · 纸笔</dd></div>
+      </dl>
+
+      <div class="idcard-foot">
+        <span class="dot" aria-hidden="true"></span>
+        空闲中 · 通常 24 小时内回复
+      </div>
+    </aside>
+  </section>
+
+  <div class="strip" aria-label="本页用到的前端术语">
+    <div class="strip-track">
+      <ul class="strip-list">
+        <li>vibrancy</li><li>backdrop-filter</li><li>saturate 180%</li>
+        <li>hairline border</li><li>inner highlight</li><li>continuous radius</li>
+        <li>color-scheme</li><li>prefers-color-scheme</li><li>mask wipe</li>
+        <li>@property</li><li>reduced motion</li><li>progressive enhancement</li>
+      </ul>
+      <ul class="strip-list" aria-hidden="true">
+        <li>vibrancy</li><li>backdrop-filter</li><li>saturate 180%</li>
+        <li>hairline border</li><li>inner highlight</li><li>continuous radius</li>
+        <li>color-scheme</li><li>prefers-color-scheme</li><li>mask wipe</li>
+        <li>@property</li><li>reduced motion</li><li>progressive enhancement</li>
+      </ul>
+    </div>
+  </div>
+
+  <section class="wrap sec-pad" id="work">
+    <div class="sec-head">
+      <span class="sec-idx">01</span>
+      <h2 class="sec-title">近期在做的四件事</h2>
+      <span class="sec-en">Selected Work</span>
+    </div>
+
+    <div class="work-grid">
+
+      <article class="card glass reveal">
+        <div class="thumb t1">
+          <div class="thumb-pane" aria-hidden="true"><i></i><i></i><i></i></div>
+          <span class="thumb-tag">Design System</span>
+        </div>
+        <div class="card-body">
+          <div class="card-head"><h3>玻璃材质设计系统</h3><span class="idx">01</span></div>
+          <p>把「玻璃」拆成可复用的四层：底色、模糊、内高光、发丝描边。12 条产品线共用一套材质令牌，改一处，全站一致。</p>
+          <ul class="tags"><li>Tokens</li><li>CSS 变量</li><li>文档</li></ul>
+        </div>
+      </article>
+
+      <article class="card glass reveal">
+        <div class="thumb t2">
+          <div class="thumb-pane" aria-hidden="true"><i></i><i></i><i></i></div>
+          <span class="thumb-tag">Dashboard</span>
+        </div>
+        <div class="card-body">
+          <div class="card-head"><h3>低噪音数据看板</h3><span class="idx">02</span></div>
+          <p>删掉 80% 的网格线和投影，只留数据本身。指标卡用玻璃分层，让「重点」靠材质而非颜色跳出来。</p>
+          <ul class="tags"><li>数据可视化</li><li>信息密度</li></ul>
+        </div>
+      </article>
+
+      <article class="card glass reveal">
+        <div class="thumb t3">
+          <div class="thumb-pane" aria-hidden="true"><i></i><i></i><i></i></div>
+          <span class="thumb-tag">Prototype</span>
+        </div>
+        <div class="card-body">
+          <div class="card-head"><h3>移动端可点原型</h3><span class="idx">03</span></div>
+          <p>三周从流程图做到可点原型，含空态、加载、错误全套状态 —— 讨论的时候不再靠想象。</p>
+          <ul class="tags"><li>交互</li><li>状态设计</li></ul>
+        </div>
+      </article>
+
+      <article class="card glass reveal">
+        <div class="thumb t4">
+          <div class="thumb-pane" aria-hidden="true"><i></i><i></i><i></i></div>
+          <span class="thumb-tag">Motion</span>
+        </div>
+        <div class="card-body">
+          <div class="card-head"><h3>界面动效研究</h3><span class="idx">04</span></div>
+          <p>一套缓动曲线与时长刻度表。目标只有一个：动效让人觉得「快」，而不是「在动」。</p>
+          <ul class="tags"><li>Easing</li><li>性能</li><li>reduced-motion</li></ul>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="wrap sec-pad" id="stack">
+    <div class="sec-head">
+      <span class="sec-idx">02</span>
+      <h2 class="sec-title">用什么把它做出来</h2>
+      <span class="sec-en">Toolbox</span>
+    </div>
+
+    <div class="stack-panel glass reveal">
+      <div class="stack-col">
+        <h3>界面</h3>
+        <p class="stack-sub">结构与材质，尽量交给 CSS 本身。</p>
+        <ul class="chips">
+          <li>HTML</li><li>CSS Grid</li><li>Flexbox</li><li>backdrop-filter</li>
+          <li>mask</li><li>container query</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <h3>工程</h3>
+        <p class="stack-sub">类型、构建、可维护性。</p>
+        <ul class="chips">
+          <li>TypeScript</li><li>React</li><li>Vite</li><li>PostCSS</li>
+          <li>Git</li><li>Storybook</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <h3>动效</h3>
+        <p class="stack-sub">能不用库就不用库，能用 CSS 就用 CSS。</p>
+        <ul class="chips">
+          <li>CSS transition</li><li>Web Animations</li><li>IntersectionObserver</li>
+          <li>View Transitions</li><li>WebGL</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap sec-pad" id="notes">
+    <div class="sec-head">
+      <span class="sec-idx">03</span>
+      <h2 class="sec-title">随手写下的几篇</h2>
+      <span class="sec-en">Notes</span>
+    </div>
+
+    <ul class="note-list reveal">
+      <li>
+        <a href="#notes">
+          <span class="note-idx">01</span>
+          <span class="note-title">苹果的玻璃为什么看起来「清」，我们的为什么「脏」</span>
+          <span class="note-tag">材质</span>
+          <span class="note-date">2026.11</span>
+        </a>
+      </li>
+      <li>
+        <a href="#notes">
+          <span class="note-idx">02</span>
+          <span class="note-title">为什么我把整套阴影换成了发丝描边</span>
+          <span class="note-tag">细节</span>
+          <span class="note-date">2026.09</span>
+        </a>
+      </li>
+      <li>
+        <a href="#notes">
+          <span class="note-idx">03</span>
+          <span class="note-title">用一层斜向羽化的幕布做主题切换</span>
+          <span class="note-tag">动效</span>
+          <span class="note-date">2026.07</span>
+        </a>
+      </li>
+      <li>
+        <a href="#notes">
+          <span class="note-idx">04</span>
+          <span class="note-title">动效时长表：120 / 240 / 480 毫秒之外的东西</span>
+          <span class="note-tag">动效</span>
+          <span class="note-date">2026.05</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="wrap sec-pad" id="contact">
+    <div class="contact-panel glass reveal">
+      <h2 class="contact-title">有个想法？<br>我们可以把它做成<span class="nw">看得见的东西</span>。</h2>
+      <p class="contact-lede">
+        接设计系统、落地页、产品界面与动效专项。也接受短期的「界面体检」——
+        给我一个<span class="nw">页面</span>，我告诉你它哪里在拖后腿。
+      </p>
+      <div class="contact-actions">
+        <a class="btn btn-primary" href="mailto:hello@yourname.com">hello@yourname.com <span class="arw" aria-hidden="true">→</span></a>
+        <button class="btn btn-ghost" type="button" data-copy="hello@yourname.com">复制邮箱</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap foot-inner">
+    <p class="foot-note">© 2026 你的名字 · 手写 HTML 与 CSS，没有模板，也没有构建步骤。</p>
+    <div class="foot-links">
+      <a href="#top">回到顶部</a>
+      <a href="#work">作品</a>
+      <a href="mailto:hello@yourname.com">邮箱</a>
+    </div>
+  </div>
+</footer>
+
+<div class="tweaks">
+  <div class="tweak-panel glass" id="tweakPanel" hidden>
+    <h2>材质参数</h2>
+    <p class="tweak-hint">这四个值决定「像不像苹果的玻璃」。切换主题时会各自记住。</p>
+
+    <div class="tweak-field">
+      <label for="tBlur">模糊半径 <span class="tweak-val" id="vBlur">24px</span></label>
+      <input type="range" id="tBlur" min="0" max="48" step="1" value="24">
+    </div>
+
+    <div class="tweak-field">
+      <label for="tTint">玻璃浓度 <span class="tweak-val" id="vTint">1.00×</span></label>
+      <input type="range" id="tTint" min="30" max="200" step="5" value="100">
+    </div>
+
+    <div class="tweak-field">
+      <label for="tSat">背景饱和度 <span class="tweak-val" id="vSat">180%</span></label>
+      <input type="range" id="tSat" min="100" max="260" step="5" value="180">
+    </div>
+
+    <div class="tweak-field">
+      <label for="tGrain">噪点强度 <span class="tweak-val" id="vGrain">0.022</span></label>
+      <input type="range" id="tGrain" min="0" max="10" step="0.5" value="2">
+    </div>
+
+    <button class="tweak-reset" type="button" id="tweakReset">恢复默认</button>
+  </div>
+
+  <button class="tweak-toggle" type="button" id="tweakToggle"
+          aria-expanded="false" aria-controls="tweakPanel" aria-label="材质参数">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.2"/>
+      <path d="M12 2.6v2.4M12 19v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.6 12H5M19 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+    </svg>
+    <span class="label">材质参数</span>
+  </button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">已复制</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+  var reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  /* ══════════════════════════════════════════════════════════
+     1. 主题切换：斜向幕布
+     ══════════════════════════════════════════════════════════ */
+  var WIPE_MS = 760;
+  var themeBtns = document.querySelectorAll('[data-theme-set]');
+  var themeBusy = false;
+
+  function currentTheme() {
+    return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+
+  function syncSwitch(t) {
+    themeBtns.forEach(function (b) {
+      b.setAttribute('aria-checked', String(b.getAttribute('data-theme-set') === t));
+    });
+  }
+
+  function commit(t) {
+    root.classList.add('no-anim');           // 换主题那一帧不要任何过渡
+    root.setAttribute('data-theme', t);
+    root.style.colorScheme = t;
+    syncSwitch(t);
+    try { localStorage.setItem('style_1.theme', t); } catch (e) {}
+    // 强制一次样式计算，再放开过渡
+    void root.offsetWidth;
+    requestAnimationFrame(function () { root.classList.remove('no-anim'); });
+  }
+
+  function setTheme(t, animate) {
+    if (t === currentTheme() || themeBusy) return;
+
+    if (!animate || reduceMQ.matches) { commit(t); return; }
+
+    /* 首选：View Transitions —— 新旧页面各一张快照，把新页面斜向擦出来。
+       这样过程中看到的是真实内容，不会出现「页面先变空再出现」。 */
+    if (typeof document.startViewTransition === 'function') {
+      themeBusy = true;
+      var vt = document.startViewTransition(function () { commit(t); });
+      var done = function () { themeBusy = false; };
+      if (vt.finished) vt.finished.then(done, done);
+      else setTimeout(done, WIPE_MS);
+      return;
+    }
+
+    /* 降级：斜向幕布 */
+    themeBusy = true;
+
+    var wipe = document.createElement('div');
+    wipe.className = 'theme-wipe';
+    wipe.setAttribute('data-theme', t);
+    wipe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(wipe);
+
+    void wipe.offsetWidth;
+    requestAnimationFrame(function () {
+      wipe.style.setProperty('--sweep', '1');
+    });
+
+    setTimeout(function () {
+      commit(t);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          wipe.remove();
+          themeBusy = false;
+        });
+      });
+    }, WIPE_MS);
+  }
+
+  themeBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      setTheme(b.getAttribute('data-theme-set'), true);
+    });
+  });
+
+  syncSwitch(currentTheme());
+
+  // 系统外观变化时跟随（只在用户没手动选过的情况下）
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+      var saved = null;
+      try { saved = localStorage.getItem('style_1.theme'); } catch (err) {}
+      if (saved) return;
+      setTheme(e.matches ? 'dark' : 'light', true);
+    });
+  } catch (e) {}
+
+  /* ══════════════════════════════════════════════════════════
+     2. 导航滚动状态
+     ══════════════════════════════════════════════════════════ */
+  var navWrap = document.getElementById('navWrap');
+  var onScroll = function () {
+    navWrap.classList.toggle('scrolled', window.scrollY > 20);
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ══════════════════════════════════════════════════════════
+     3. 入场
+     ══════════════════════════════════════════════════════════ */
+  var targets = document.querySelectorAll('.reveal');
+  if (reduceMQ.matches || !('IntersectionObserver' in window)) {
+    targets.forEach(function (el) { el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.08 });
+    targets.forEach(function (el, i) {
+      el.style.transitionDelay = (i % 4) * 60 + 'ms';
+      io.observe(el);
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     4. 卡片：轻微倾斜（苹果的手感是「几乎察觉不到」）
+     ══════════════════════════════════════════════════════════ */
+  if (canHover && !reduceMQ.matches) {
+    document.querySelectorAll('.card').forEach(function (card) {
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width;
+        var py = (e.clientY - r.top) / r.height;
+        card.style.transform =
+          'perspective(1100px) rotateX(' + ((0.5 - py) * 2.6).toFixed(2) + 'deg) ' +
+          'rotateY(' + ((px - 0.5) * 3.2).toFixed(2) + 'deg) translate3d(0,-4px,0)';
+      });
+      card.addEventListener('pointerleave', function () {
+        card.style.transform = '';
+      });
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     5. 复制
+     ══════════════════════════════════════════════════════════ */
+  var toast = document.getElementById('toast');
+  var toastTimer = null;
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy') ? resolve() : reject();
+      } catch (err) { reject(err); }
+      finally { document.body.removeChild(ta); }
+    });
+  }
+
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      copyText(text).then(function () {
+        showToast('已复制 ' + text);
+      }).catch(function () {
+        showToast('复制失败，请手动选中：' + text);
+      });
+    });
+  });
+
+  /* ══════════════════════════════════════════════════════════
+     6. 材质参数
+     ══════════════════════════════════════════════════════════ */
+  var panel = document.getElementById('tweakPanel');
+  var toggle = document.getElementById('tweakToggle');
+  var STORE_KEY = 'style_1.material.v1';
+  var DEFAULTS = { blur: 24, tint: 100, sat: 180, grain: 2 };
+
+  var els = {
+    blur: document.getElementById('tBlur'),
+    tint: document.getElementById('tTint'),
+    sat: document.getElementById('tSat'),
+    grain: document.getElementById('tGrain')
+  };
+  var outs = {
+    blur: document.getElementById('vBlur'),
+    tint: document.getElementById('vTint'),
+    sat: document.getElementById('vSat'),
+    grain: document.getElementById('vGrain')
+  };
+
+  function apply(v) {
+    root.style.setProperty('--glass-blur', v.blur + 'px');
+    root.style.setProperty('--glass-tint', (v.tint / 100).toFixed(2));
+    root.style.setProperty('--glass-sat', v.sat + '%');
+    root.style.setProperty('--grain', (v.grain / 100).toFixed(3));
+
+    outs.blur.textContent = v.blur + 'px';
+    outs.tint.textContent = (v.tint / 100).toFixed(2) + '×';
+    outs.sat.textContent = v.sat + '%';
+    outs.grain.textContent = (v.grain / 100).toFixed(3);
+  }
+
+  function read() {
+    var v = {};
+    Object.keys(els).forEach(function (k) { v[k] = parseFloat(els[k].value); });
+    return v;
+  }
+
+  function save(v) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(v)); } catch (e) {}
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return null;
+      var v = JSON.parse(raw);
+      return (v && typeof v.blur === 'number') ? v : null;
+    } catch (e) { return null; }
+  }
+
+  var saved = load();
+  if (saved) {
+    Object.keys(els).forEach(function (k) {
+      if (typeof saved[k] === 'number') els[k].value = saved[k];
+    });
+  }
+  apply(read());
+
+  Object.keys(els).forEach(function (k) {
+    els[k].addEventListener('input', function () {
+      var v = read();
+      apply(v);
+      save(v);
+    });
+  });
+
+  document.getElementById('tweakReset').addEventListener('click', function () {
+    Object.keys(els).forEach(function (k) { els[k].value = DEFAULTS[k]; });
+    apply(DEFAULTS);
+    save(DEFAULTS);
+    showToast('已恢复默认材质');
+  });
+
+  toggle.addEventListener('click', function () {
+    var open = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!open));
+    if (open) panel.setAttribute('hidden', '');
+    else panel.removeAttribute('hidden');
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (toggle.getAttribute('aria-expanded') !== 'true') return;
+    toggle.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('hidden', '');
+    toggle.focus();
+  });
+})();
+</script>
+</body>
+</html>
